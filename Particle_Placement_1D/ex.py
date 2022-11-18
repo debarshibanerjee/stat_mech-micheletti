@@ -5,45 +5,85 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
+# ================================================= Get Distances =====================================================#
 def get_distances(vec1, vec2, L):
+    """
+    Function to return distance between 2 1-D arrays.
+    Also takes care of PBC along 1-D, such that smaller distance is chosen.
+    Returns the final distance matrix.
+    """
+
+    ## Get the distance matrix using either minkowski(p=1) or simple euclidean distance
     # dist_matrix = cdist(vec1[:, np.newaxis], vec2[:, np.newaxis], 'euclidean')
     dist_matrix = cdist(vec1[:, np.newaxis], vec2[:, np.newaxis], "minkowski", p=1)
+
+    ## Take care of PBC: if dist > L/2, then choose the smaller distance
+    ## // is floor division
     dist_matrix = np.abs(dist_matrix - L * (dist_matrix // (L / 2)))
+
     return dist_matrix
 
 
-def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fraction):
+# =====================================================================================================================#
 
+
+# ============================================ Generate Configurations ================================================#
+def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fraction):
+    """
+    Function to generate configurations, and keep those that meet the criteria.
+    The rest are discarded.
+    Returns the minimum distance between 2 large particles amongst the acceptable configurations.
+    """
+
+    ## Formula of L given as follows
     L = ((2.0 * R_large * N_large) + (2.0 * R_small * N_small)) / filling_fraction
 
+    ## Recommended way of generating uniform random numbers acc to Numpy docs
     rng = default_rng()
+
+    ## Generate appropriate configurations for both macro and micro particles
+    ## Choose uniformly distributed random numbers between 0 and L
+    ## Do so for all possible trials
     macro_configs = rng.uniform(low=0.0, high=L, size=(num_trials, N_large))
     micro_configs = rng.uniform(low=0.0, high=L, size=(num_trials, N_small))
 
+    ## List to append results
     results = []
 
+    ## Start the loop over all trials
     for i in tqdm(range(num_trials)):
 
+        ## Choose the configurations for a given trial
         macro_vec = macro_configs[i, :]
         micro_vec = micro_configs[i, :]
 
+        ## Get the distance matrices for macro-macro, micro-micro, and macro-micro combinations
         macro_macro_dist = get_distances(macro_vec, macro_vec, L)
         micro_micro_dist = get_distances(micro_vec, micro_vec, L)
         macro_micro_dist = get_distances(macro_vec, micro_vec, L)
 
+        ## Some debugging comments
         # print(macro_macro_dist)
         # print(macro_vec)
         # print(L)
 
-        # Hack to ignore self-distances
+        ## Hack to ignore self-distances by setting diagonal elements to largest value
+        ## This is because diagonal elements are otherwise set to 0 for obvious reasons
+        ## Namely, that they are distances between 1 particle and itself
         np.fill_diagonal(macro_macro_dist, np.max(macro_macro_dist))
         np.fill_diagonal(micro_micro_dist, np.max(micro_micro_dist))
         np.fill_diagonal(macro_micro_dist, np.max(macro_micro_dist))
 
+        ## Choose minimum distances for all cases of particles
         min_macro_macro_dist = np.min(macro_macro_dist)
         min_micro_micro_dist = np.min(micro_micro_dist)
         min_macro_micro_dist = np.min(macro_micro_dist)
 
+        ## If the spheres oriented along 1D overlap each other, ignore the configurations
+        ## In that case, move on to the next loop iteration, i.e., the next trial
+        ## The distance must be less than sum of radii of 2 compared spheres for configuration to be unacceptable
+        ## If all the checks pass, add the minimum distance between 2 large particles to a List
+        ## Remember that ultimately we are interested in the probability distribution of this distance for macro particles
         if (
             (min_macro_micro_dist < (2 * R_large))
             or (min_micro_micro_dist < (2 * R_small))
@@ -57,6 +97,10 @@ def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fra
     return results
 
 
+# =====================================================================================================================#
+
+
+# ================================================= Define main() =====================================================#
 def main():
 
     # parameters for macro particles
@@ -93,6 +137,10 @@ def main():
     plt.show()
 
 
-## main() ##
+# =====================================================================================================================#
+
+
+# ================================================== Call main() ======================================================#
 if __name__ == "__main__":
     main()
+# =====================================================================================================================#
