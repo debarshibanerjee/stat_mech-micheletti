@@ -74,6 +74,10 @@ def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fra
         np.fill_diagonal(micro_micro_dist, np.max(micro_micro_dist))
         np.fill_diagonal(macro_micro_dist, np.max(macro_micro_dist))
 
+        ## Some debugging comments
+        # print(macro_macro_dist)
+        # print(np.unique(macro_macro_dist))
+
         ## Choose minimum distances for all cases of particles
         min_macro_macro_dist = np.min(macro_macro_dist)
         min_micro_micro_dist = np.min(micro_micro_dist)
@@ -92,7 +96,7 @@ def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fra
             continue
         else:
             # print(min_macro_macro_dist)
-            results.append(min_macro_macro_dist)
+            results.append(np.unique(macro_macro_dist))
 
     return results
 
