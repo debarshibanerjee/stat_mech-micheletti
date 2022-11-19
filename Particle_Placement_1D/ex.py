@@ -1,9 +1,9 @@
+import concurrent.futures
 import numpy as np
+import matplotlib.pyplot as plt
 from numpy.random import default_rng
 from scipy.spatial.distance import cdist
-import matplotlib.pyplot as plt
 from tqdm import tqdm
-
 
 # ================================================= Get Distances =====================================================#
 def get_distances(vec1, vec2, L):
@@ -89,7 +89,7 @@ def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fra
         ## If all the checks pass, add the minimum distance between 2 large particles to a List
         ## Remember that ultimately we are interested in the probability distribution of this distance for macro particles
         if (
-            (min_macro_micro_dist < (2 * R_large))
+            (min_macro_macro_dist < (2 * R_large))
             or (min_micro_micro_dist < (2 * R_small))
             or (min_macro_micro_dist < (R_large + R_small))
         ):
@@ -107,38 +107,55 @@ def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fra
 # ================================================= Define main() =====================================================#
 def main():
 
-    # parameters for macro particles
+    ## parameters for macro particles
     N_large = 2
     R_large = 1.0
 
-    # parameters for micro particles
+    ## parameters for micro particles
     N_small = 20
     R_small = 0.01
 
-    # phi
-    filling_fraction = 0.3
+    ## phi
+    filling_fraction = 0.2
 
-    # Number of num_trials
-    num_trials = 10000000
+    ## Number of num_trials
+    num_trials = 1000000
 
-    # Number of runs
-    num_runs = 10
+    ## Number of runs
+    num_runs = 100
 
+    tmp_configs = []
     final_configs = []
 
+    # for i in range(num_runs):
+    #     print(f"RUN {i}...")
+    #     tmp_res = generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fraction)
+    #     final_configs = final_configs + tmp_res
+
+    futures = []
+    executor = concurrent.futures.ProcessPoolExecutor(max_workers=4)
     for i in range(num_runs):
-        print(f"RUN {i}...")
-        tmp_res = generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fraction)
-        final_configs = final_configs + tmp_res
+        print(f"RUN {i+1}...")
+        futures.append(
+            executor.submit(generate_configs, num_trials, R_large, R_small, N_large, N_small, filling_fraction)
+        )
+
+    ## Recover results from future
+    for future in concurrent.futures.as_completed(futures):
+        tmp_configs.append(future.result())
+
+    for i in range(len(tmp_configs)):
+        l = [x for x in tmp_configs[i]]
+        final_configs = final_configs + l
 
     print(f"Number of acceptable configurations = {len(final_configs)}")
     print(f"Total number of requested trials = {num_runs*num_trials}")
 
     np.savetxt("data.txt", final_configs)
 
-    plt.hist(final_configs, bins="auto")
+    plt.hist(final_configs, bins="auto", density=True)
     plt.savefig("prob_distribution.png")
-    plt.show()
+    # plt.show()
 
 
 # =====================================================================================================================#
