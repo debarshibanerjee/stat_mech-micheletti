@@ -113,6 +113,7 @@ def main():
 
     if n_args != 2:
         nprocs = 1
+        print("You can also run the code as: 'python3 ex.py 4', to use 4 CPUs")
     else:
         nprocs = int(sys.argv[1])
 
