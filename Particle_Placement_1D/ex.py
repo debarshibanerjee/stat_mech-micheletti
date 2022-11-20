@@ -1,6 +1,8 @@
 import concurrent.futures
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import os
+import sys
 from numpy.random import default_rng
 from scipy.spatial.distance import cdist
 from tqdm import tqdm
@@ -107,6 +109,19 @@ def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fra
 # ================================================= Define main() =====================================================#
 def main():
 
+    n_args = len(sys.argv)
+
+    if n_args != 2:
+        nprocs = 1
+    else:
+        nprocs = int(sys.argv[1])
+
+    n_cpus = os.cpu_count()
+    if nprocs > n_cpus:
+        nprocs = n_cpus
+
+    print(f"Number of processes created simultaneously = {nprocs}")
+
     ## parameters for macro particles
     N_large = 2
     R_large = 1.0
@@ -116,31 +131,27 @@ def main():
     R_small = 0.01
 
     ## phi
-    filling_fraction = 0.2
+    filling_fraction = 0.5
 
     ## Number of num_trials
     num_trials = 1000000
 
     ## Number of runs
-    num_runs = 100
+    num_runs = 300
 
     tmp_configs = []
     final_configs = []
 
-    # for i in range(num_runs):
-    #     print(f"RUN {i}...")
-    #     tmp_res = generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fraction)
-    #     final_configs = final_configs + tmp_res
-
+    ## Parallel execution
     futures = []
-    executor = concurrent.futures.ProcessPoolExecutor(max_workers=4)
+    executor = concurrent.futures.ProcessPoolExecutor(max_workers=nprocs)
     for i in range(num_runs):
         print(f"RUN {i+1}...")
         futures.append(
             executor.submit(generate_configs, num_trials, R_large, R_small, N_large, N_small, filling_fraction)
         )
 
-    ## Recover results from future
+    ## Recover results from futures
     for future in concurrent.futures.as_completed(futures):
         tmp_configs.append(future.result())
 
