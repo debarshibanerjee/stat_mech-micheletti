@@ -30,7 +30,7 @@ def get_distances(vec1, vec2, L):
 
 
 # ============================================ Generate Configurations ================================================#
-def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fraction):
+def generate_configs(num_trials, R_large, R_small, N_large, N_small, N_lattice):
     """
     Function to generate configurations, and keep those that meet the criteria.
     The rest are discarded.
@@ -38,7 +38,8 @@ def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fra
     """
 
     ## Formula of L given as follows
-    L = ((2.0 * R_large * N_large) + (2.0 * R_small * N_small)) / filling_fraction
+    # L = ((2.0 * R_large * N_large) + (2.0 * R_small * N_small)) / filling_fraction
+    L = N_lattice
 
     ## Recommended way of generating uniform random numbers acc to Numpy docs
     rng = default_rng()
@@ -46,8 +47,8 @@ def generate_configs(num_trials, R_large, R_small, N_large, N_small, filling_fra
     ## Generate appropriate configurations for both macro and micro particles
     ## Choose uniformly distributed random numbers between 0 and L
     ## Do so for all possible trials
-    macro_configs = rng.uniform(low=0.0, high=L, size=(num_trials, N_large))
-    micro_configs = rng.uniform(low=0.0, high=L, size=(num_trials, N_small))
+    macro_configs = rng.integers(low=0, high=N_lattice, size=(num_trials, N_large))
+    micro_configs = rng.integers(low=0, high=N_lattice, size=(num_trials, N_small))
 
     ## List to append results
     results = []
@@ -125,11 +126,14 @@ def main():
 
     ## parameters for macro particles
     N_large = 2
-    R_large = 1.0
+    R_large = 0.9
 
     ## parameters for micro particles
-    N_small = 20
-    R_small = 0.01
+    N_small = 17
+    R_small = 0.25
+
+    ## Number of lattice sites in discretized space
+    N_lattice = 50
 
     ## phi
     filling_fraction = 0.5
@@ -138,7 +142,7 @@ def main():
     num_trials = 1000000
 
     ## Number of runs
-    num_runs = 300
+    num_runs = 10
 
     tmp_configs = []
     final_configs = []
@@ -149,7 +153,7 @@ def main():
     for i in range(num_runs):
         print(f"RUN {i+1}...")
         futures.append(
-            executor.submit(generate_configs, num_trials, R_large, R_small, N_large, N_small, filling_fraction)
+            executor.submit(generate_configs, num_trials, R_large, R_small, N_large, N_small, N_lattice)
         )
 
     ## Recover results from futures
