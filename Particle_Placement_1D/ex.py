@@ -21,7 +21,7 @@ def get_distances(vec1, vec2, L):
 
     ## Take care of PBC: if dist > L/2, then choose the smaller distance
     ## // is floor division
-    dist_matrix = np.abs(dist_matrix - L * (dist_matrix // (L / 2)))
+    dist_matrix = np.abs(dist_matrix - np.round(dist_matrix/L)*L)
 
     return dist_matrix
 
@@ -114,7 +114,7 @@ def main():
 
     if n_args != 2:
         nprocs = 1
-        print("You can also run the code as: 'python3 ex.py 4', to use 4 CPUs")
+        print("You can also run the code as: 'python3 ex.py 4', to use 4 CPU cores")
     else:
         nprocs = int(sys.argv[1])
 
@@ -133,7 +133,7 @@ def main():
     R_small = 0.25
 
     ## Number of lattice sites in discretized space
-    N_lattice = 50
+    N_lattice = 51
 
     ## phi
     filling_fraction = 0.5
@@ -142,7 +142,7 @@ def main():
     num_trials = 1000000
 
     ## Number of runs
-    num_runs = 10
+    num_runs = 12
 
     tmp_configs = []
     final_configs = []
@@ -169,9 +169,9 @@ def main():
 
     np.savetxt("data.txt", final_configs)
 
-    plt.hist(final_configs, bins="auto", density=True)
+    plt.hist(final_configs, bins=N_lattice, density=True)
     plt.savefig("prob_distribution.png")
-    # plt.show()
+    plt.show()
 
 
 # =====================================================================================================================#

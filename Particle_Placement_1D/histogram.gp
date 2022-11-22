@@ -1,6 +1,6 @@
-Min = 0.0 # where binning starts
-Max = 30.0 # where binning ends
-n = 30 # the number of bins
+Min = 2.0 # where binning starts
+Max = 25.0 # where binning ends
+n = 23 # the number of bins
 binwidth = (Max-Min)/n # binwidth; evaluates to 1.0
 
 bin(x) = binwidth*(floor((x-Min)/binwidth)+0.5) + Min
